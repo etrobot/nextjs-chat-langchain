@@ -104,12 +104,8 @@ export async function POST(req: NextRequest) {
   
   Question: input question to answer
   Thought: {agent_scratchpad}
-  Action:
-  \`\`\`
-  $JSON_BLOB
-  \`\`\`
   Observation: action result
-  ... (repeat Thought/Action/Observation N times)
+  (Thought/Action/Observation ONE times per action)
   Thought: I know what to respond
   Action: output final answer.
   Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary. Respond directly if appropriate. Format is Action:\`\`\`$JSON_BLOB\`\`\`then Observation`;
