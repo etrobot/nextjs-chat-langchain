@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   Follow this format:
   
   Question: input question to answer
-  Thought: consider previous and subsequent steps
+  Thought: {agent_scratchpad}
   Action:
   \`\`\`
   $JSON_BLOB
