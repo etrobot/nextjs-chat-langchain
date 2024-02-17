@@ -1,13 +1,10 @@
 import { NextRequest } from 'next/server';
 import { Message as VercelChatMessage, StreamingTextResponse } from 'ai';
 import { AIMessage, ChatMessage, HumanMessage } from "@langchain/core/messages";
-import { pull } from "langchain/hub";
 
 import { ChatOpenAI } from '@langchain/openai';
 import {
-  PromptTemplate,
   ChatPromptTemplate,
-  MessagesPlaceholder,
 } from "@langchain/core/prompts";
 
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
@@ -18,9 +15,8 @@ import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
 import { LLMResult } from '@langchain/core/outputs';
 
-import { AgentExecutor, createStructuredChatAgent,createReactAgent } from "langchain/agents";
+import { AgentExecutor, createStructuredChatAgent } from "langchain/agents";
 import { BingSerpAPI } from "@langchain/community/tools/bingserpapi";
-import { Calculator } from "langchain/tools/calculator";
 export const runtime = 'edge';
 
 const convertVercelMessageToLangChainMessage = (message: VercelChatMessage) => {
@@ -67,30 +63,6 @@ class MyCallbackHandler extends BaseCallbackHandler {
       member: `chat:${id}`
     })
   }
-
-  // async handleChainStart(chain: Serialized) {
-  //   console.log(`Entering new ${chain.id} chain...`);
-  // }
-
-  // async handleChainEnd(_output: ChainValues) {
-  //   console.log("Finished chain.");
-  // }
-
-  // async handleAgentAction(action: AgentAction) {
-  //   console.log(action.log);
-  // }
-
-  // async handleToolEnd(output: string) {
-  //   console.log(output);
-  // }
-
-  // async handleText(text: string) {
-  //   console.log(text);
-  // }
-
-  // async handleAgentEnd(action: AgentFinish) {
-  //   console.log(action);
-  // }
 }
 
 export async function POST(req: NextRequest) {
@@ -112,28 +84,23 @@ export async function POST(req: NextRequest) {
   ];
 
   const SYSTEM_TEMPLATE = `Respond after accessing one of the tools {tools} with names "{tool_names}" if neccesary:
-  {agent_scratchpad}
-     \`\`\`
-  {{
-    "action": $TOOL_NAME,
-    "action_input": $INPUT
-  }}
-  \`\`\`
-  Observation: action result Then output final answer briefly in markdown format like  \`\`\`markdown\n {{final_answer}}  \`\`\`
-  ended with a json blob\`\`\`
-  {{
-    "action":  "Final Answer",
-    "action_input":  "DONE",
-  }}
-  \`\`\`
-  The question is:\n`;
+{agent_scratchpad} Provide only ONE action per $JSON_BLOB in the format below.
+\`\`\`
+{{
+  "action": $TOOL_NAME,
+  "action_input": $INPUT
+}}
+\`\`\`
+Observation: action result
+... (Thought/Action/Observation once)
+Thought: I know what to respond
+Action: output final answer
+The question is:\n`;
   const prompt = ChatPromptTemplate.fromMessages([
     ["system", SYSTEM_TEMPLATE],
     ["human", "{input}"],
   ]);
 
-  // const prompt = await pull<PromptTemplate>("hwchase17/react");
-  
   const model = new ChatOpenAI({
     temperature: 0.1,
     modelName:process.env.LLM_MODEL,
@@ -146,18 +113,6 @@ export async function POST(req: NextRequest) {
   
   const myCallback = new MyCallbackHandler(body, userId);
  
-  // const outputParser = new BytesOutputParser();
-
-  // const chain = prompt.pipe(model).pipe(outputParser);
-
- 
-  // const stream = await chain.stream({
-  //   chat_history: formattedPreviousMessages.join('\n'),
-  //   input: currentMessageContent,
-  // },{
-  //   callbacks: [myCallback]
-  // });
-
   const agent = await createStructuredChatAgent({
     llm: model,
     tools,
