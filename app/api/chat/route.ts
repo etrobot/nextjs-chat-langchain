@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     new BingSerpAPI(process.env.BINGSERP_API_KEY)
   ];
 
-  const SYSTEM_TEMPLATE = process.env.SYSTEM_TEMPLATE
+  const SYSTEM_TEMPLATE = process.env.SYSTEM_TEMPLATE ?? 'thought with "{agent_scratchpad}" and use one of tools({tools}) by calling tool name {tools_name} in format ```{"action":$TOOLNAME,"action_input":$USER_INPUT}```  then output final answer'
   
   const prompt = ChatPromptTemplate.fromMessages([
     ["system", SYSTEM_TEMPLATE],
